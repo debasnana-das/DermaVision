@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+.venv/
+venv/
+env/
+
+# Environment and local configuration
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Datasets and generated files
+data/
+dataset/
+datasets/
+outputs/
+runs/
+checkpoints/
+
+# Model weights and exported models
+*.pt
+*.pth
+*.onnx
+*.safetensors
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
