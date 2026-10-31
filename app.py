@@ -141,7 +141,6 @@ else:
                 "The configured model weights could not be loaded. "
                 "The application is showing the non-diagnostic image-processing preview instead."
             )
-            st.caption(f"Model loading detail: {model_error}")
 
     with result_col:
         st.subheader("Analysis result")
