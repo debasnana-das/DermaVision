@@ -1,10 +1,17 @@
 import os
 from datetime import datetime, timezone
+from io import BytesIO
 from pathlib import Path
+from xml.sax.saxutils import escape
 
 import numpy as np
 import streamlit as st
 from PIL import Image
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.units import mm
+from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer
 
 from guidance import get_educational_guidance
 from skin_analysis import (
@@ -66,6 +73,115 @@ def create_report(quality: dict, detections: list[dict] | None, mode: str) -> st
         "Consult a qualified healthcare professional for medical concerns.",
     ])
     return "\n".join(lines)
+
+
+def create_pdf_report(report_text: str) -> bytes:
+    """Create a downloadable PDF using the same content as the text report."""
+    buffer = BytesIO()
+    page_width, _ = A4
+    left_margin = right_margin = 18 * mm
+
+    document = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=right_margin,
+        leftMargin=left_margin,
+        topMargin=18 * mm,
+        bottomMargin=18 * mm,
+        title="DermaVision - Image Analysis Summary",
+        author="DermaVision",
+        subject="Educational facial image analysis summary",
+    )
+
+    title_style = ParagraphStyle(
+        "DermaVisionTitle",
+        fontName="Helvetica-Bold",
+        fontSize=17,
+        leading=21,
+        textColor=colors.HexColor("#17365D"),
+        spaceAfter=4,
+    )
+    subtitle_style = ParagraphStyle(
+        "DermaVisionSubtitle",
+        fontName="Helvetica",
+        fontSize=9,
+        leading=12,
+        textColor=colors.HexColor("#667085"),
+        spaceAfter=12,
+    )
+    section_style = ParagraphStyle(
+        "DermaVisionSection",
+        fontName="Helvetica-Bold",
+        fontSize=11,
+        leading=14,
+        textColor=colors.HexColor("#17365D"),
+        spaceBefore=8,
+        spaceAfter=5,
+        keepWithNext=True,
+    )
+    body_style = ParagraphStyle(
+        "DermaVisionBody",
+        fontName="Helvetica",
+        fontSize=9.5,
+        leading=13,
+        textColor=colors.HexColor("#283444"),
+        spaceAfter=3,
+    )
+    meta_style = ParagraphStyle(
+        "DermaVisionMeta",
+        parent=body_style,
+        fontSize=8.5,
+        textColor=colors.HexColor("#667085"),
+    )
+
+    story = [
+        Paragraph("DERMAVISION - IMAGE ANALYSIS SUMMARY", title_style),
+        Paragraph(
+            "Image-based facial skin feature analysis and monitoring",
+            subtitle_style,
+        ),
+        HRFlowable(
+            width="100%",
+            thickness=0.8,
+            color=colors.HexColor("#D7DEE8"),
+            spaceAfter=10,
+        ),
+    ]
+
+    for index, line in enumerate(report_text.splitlines()):
+        clean_line = line.strip()
+        if not clean_line:
+            story.append(Spacer(1, 3))
+        elif index == 0 and clean_line.upper().startswith("DERMAVISION"):
+            continue
+        elif clean_line.upper() == "LIMITATIONS":
+            story.append(Paragraph(escape(clean_line), section_style))
+        elif clean_line.startswith("Generated:"):
+            story.append(Paragraph(escape(clean_line), meta_style))
+        else:
+            story.append(Paragraph(escape(clean_line), body_style))
+
+    def draw_footer(canvas, doc):
+        canvas.saveState()
+        canvas.setStrokeColor(colors.HexColor("#D7DEE8"))
+        canvas.setLineWidth(0.5)
+        canvas.line(left_margin, 14 * mm, page_width - right_margin, 14 * mm)
+        canvas.setFont("Helvetica", 7.5)
+        canvas.setFillColor(colors.HexColor("#667085"))
+        canvas.drawString(
+            left_margin,
+            9 * mm,
+            "DermaVision | Educational prototype - not a medical diagnosis",
+        )
+        canvas.drawRightString(
+            page_width - right_margin,
+            9 * mm,
+            f"Page {doc.page}",
+        )
+        canvas.restoreState()
+
+    document.build(story, onFirstPage=draw_footer, onLaterPages=draw_footer)
+    return buffer.getvalue()
 
 
 st.set_page_config(page_title=APP_TITLE, page_icon="D", layout="wide")
@@ -211,9 +327,22 @@ else:
             st.dataframe(st.session_state.history, use_container_width=True, hide_index=True)
 
     report_text = create_report(quality, detections, analysis_mode)
-    st.download_button(
-        "Download analysis summary",
-        data=report_text.encode("utf-8"),
-        file_name="dermavision_analysis.txt",
-        mime="text/plain",
-    )
+    report_pdf = create_pdf_report(report_text)
+
+    text_download_col, pdf_download_col = st.columns(2)
+    with text_download_col:
+        st.download_button(
+            "Download analysis summary (TXT)",
+            data=report_text.encode("utf-8"),
+            file_name="dermavision_analysis.txt",
+            mime="text/plain",
+            use_container_width=True,
+        )
+    with pdf_download_col:
+        st.download_button(
+            "Download analysis summary (PDF)",
+            data=report_pdf,
+            file_name="dermavision_analysis.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
