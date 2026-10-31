@@ -37,7 +37,12 @@ def get_model(model_path: str):
         return None, str(exc)
 
 
-def create_report(quality: dict, detections: list[dict] | None, mode: str) -> str:
+def create_report(
+    quality: dict,
+    detections: list[dict] | None,
+    mode: str,
+    educational_guidance: list[str],
+) -> str:
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     lines = [
         "DERMAVISION - IMAGE ANALYSIS SUMMARY",
@@ -65,6 +70,9 @@ def create_report(quality: dict, detections: list[dict] | None, mode: str) -> st
             )
 
     lines.extend([
+        "",
+        "GENERAL EDUCATIONAL INFORMATION",
+        *[f"- {item}" for item in educational_guidance],
         "",
         "LIMITATIONS",
         "This application is an educational software prototype. Its output is not a medical diagnosis,",
@@ -154,10 +162,14 @@ def create_pdf_report(report_text: str) -> bytes:
             story.append(Spacer(1, 3))
         elif index == 0 and clean_line.upper().startswith("DERMAVISION"):
             continue
-        elif clean_line.upper() == "LIMITATIONS":
+        elif clean_line.upper() in {"GENERAL EDUCATIONAL INFORMATION", "LIMITATIONS"}:
             story.append(Paragraph(escape(clean_line), section_style))
         elif clean_line.startswith("Generated:"):
             story.append(Paragraph(escape(clean_line), meta_style))
+        elif clean_line.startswith("- "):
+            story.append(
+                Paragraph(escape(clean_line[2:]), body_style, bulletText="-")
+            )
         else:
             story.append(Paragraph(escape(clean_line), body_style))
 
@@ -305,7 +317,8 @@ else:
         )
 
     st.subheader("General educational information")
-    for item in get_educational_guidance():
+    educational_guidance = get_educational_guidance()
+    for item in educational_guidance:
         st.markdown(f"- {item}")
 
     if detections is not None:
@@ -326,7 +339,7 @@ else:
         if st.session_state.history:
             st.dataframe(st.session_state.history, use_container_width=True, hide_index=True)
 
-    report_text = create_report(quality, detections, analysis_mode)
+    report_text = create_report(quality, detections, analysis_mode, educational_guidance)
     report_pdf = create_pdf_report(report_text)
 
     text_download_col, pdf_download_col = st.columns(2)
