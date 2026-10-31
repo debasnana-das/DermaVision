@@ -83,11 +83,14 @@ with st.sidebar:
     st.header("Analysis settings")
     confidence = st.slider(
         "Detection confidence",
-        min_value=0.10,
+        min_value=0.05,
         max_value=0.90,
-        value=0.35,
-        step=0.05,
-        help="Minimum confidence threshold used by the trained detection model.",
+        value=0.16,
+        step=0.01,
+        help=(
+            "Minimum confidence threshold used by the trained detection model. "
+            "Lower values show more candidate boxes and may increase false detections."
+        ),
     )
     st.caption("Uploaded photographs are processed in memory and are not intentionally saved by this application.")
 
