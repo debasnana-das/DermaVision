@@ -151,7 +151,7 @@ Use the resulting file for local inference by setting `DERMAVISION_MODEL_PATH`. 
 
 No dataset or trained model weights are included in this repository. The current preparation script uses the `Layered-Labs/ACNE04` Hugging Face dataset release and expects the `image`, `file_name`, `lesion_boxes` and `split` fields. ACNE04 is intended for academic and research use only. Its original licensing conditions prohibit commercial use without permission from the original authors. Review the dataset card and original source terms before downloading or using it. Cite both the dataset release and the original ACNE04 paper in academic reports. The dataset must be prepared separately on the training computer.
 
-The hosted application must have access to the trained model weights at runtime. The application looks for a file named `acne_detector.pt` in the repository root by default. Alternatively, set `DERMAVISION_MODEL_PATH` to the model file path through the hosting environment. The original training dataset is not required for inference.
+The application looks for `acne_detector.pt` in the repository root by default. Alternatively, set `DERMAVISION_MODEL_PATH` to the model file path through the hosting environment. The original training dataset is not required for inference.
 
 ## Deployment
 
@@ -172,7 +172,7 @@ The hosted application performs inference using the trained model weights. It do
 
 The repository contains the Streamlit application, image-analysis utilities, educational guidance, dependency list and a YOLO-compatible training entry point.
 
-The ACNE04 download and dataset-conversion command is implemented in `train.py`, but it has not yet been executed and validated on the training computer. The trained acne detector remains to be developed and evaluated. Until validated model weights are configured, the application uses only the clearly identified exploratory preview.
+The ACNE04 download and dataset-conversion workflow is implemented in `train.py`. An initial YOLOv8n acne-lesion detection model has been trained and its checkpoint is included as `acne_detector.pt`. Initial evaluation indicates limited detection and localisation performance. The model is an experimental academic prototype and is not clinically validated.
 
 ## Limitations and Responsible Use
 
@@ -185,7 +185,9 @@ The ACNE04 download and dataset-conversion command is implemented in `train.py`,
 
 ## Licence
 
-No software licence has been assigned to this repository. Dataset and model licences are separate from the repository licence and must be checked before redistribution or deployment.
+The project source code is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). See the `LICENSE` file for the complete licence text.
+
+Third-party datasets, pretrained weights and dependencies may have separate licence and usage conditions. The project licence does not replace or override those conditions. ACNE04 is not included in this repository; review its original dataset terms before use or redistribution.
 
 
 ## Dataset References
