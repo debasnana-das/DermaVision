@@ -99,6 +99,12 @@ The model file must be compatible with the Ultralytics inference interface used 
 
 The training entry point can prepare ACNE04 from its Hugging Face dataset repository and convert its lesion bounding boxes to YOLO format. The canonical fold-0 test partition is preserved as a held-out test set; ten percent of the official training partition is reserved for validation using a fixed random seed.
 
+The `datasets` package is required only for dataset preparation. Install it separately on the training computer:
+
+```bash
+pip install "datasets>=2.19,<4.0"
+```
+
 A YOLO-format dataset should have separate training and validation images and labels. Each label file uses the format:
 
 ```text
@@ -145,7 +151,22 @@ Use the resulting file for local inference by setting `DERMAVISION_MODEL_PATH`. 
 
 No dataset or trained model weights are included in this repository. The current preparation script uses the `Layered-Labs/ACNE04` Hugging Face dataset release and expects the `image`, `file_name`, `lesion_boxes` and `split` fields. ACNE04 is intended for academic and research use only. Its original licensing conditions prohibit commercial use without permission from the original authors. Review the dataset card and original source terms before downloading or using it. Cite both the dataset release and the original ACNE04 paper in academic reports. The dataset must be prepared separately on the training computer.
 
-The hosted application must have access to the trained model weights at runtime. This can be configured through the hosting environment or an approved external model-storage service. The original training dataset is not required for inference.
+The hosted application must have access to the trained model weights at runtime. The application looks for a file named `acne_detector.pt` in the repository root by default. Alternatively, set `DERMAVISION_MODEL_PATH` to the model file path through the hosting environment. The original training dataset is not required for inference.
+
+## Deployment
+
+For Streamlit Community Cloud:
+
+1. Place the selected trained checkpoint in the repository root and name it `acne_detector.pt`.
+2. Confirm that `app.py`, `requirements.txt`, and `acne_detector.pt` are committed to the `main` branch.
+3. Sign in at https://share.streamlit.io and connect the GitHub account that owns this repository.
+4. Select **Create app**, then choose `debasnana-das/DermaVision`, branch `main`, and entry point `app.py`.
+5. Deploy the application and wait for the dependency installation and startup checks to finish.
+6. Open the assigned `streamlit.app` URL and test it with a suitable photograph.
+
+Streamlit Community Cloud must be authorised to access the private GitHub repository before deployment. A private application can be restricted to named viewers; invited viewers must authenticate. If the application is configured as public, anyone with its URL may access it. Review the sharing setting before distributing the link.
+
+The hosted application performs inference using the trained model weights. It does not download or require the original training dataset.
 
 ## Development Status
 
