@@ -167,7 +167,7 @@ def prepare_acne04(dataset_id: str, output_dir: Path, overwrite: bool = False) -
         )
         records.append(
             {
-                "image": image,
+                "row_index": index,
                 "image_name": image_name,
                 "official_split": official_split,
                 "yolo_boxes": yolo_boxes,
