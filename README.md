@@ -151,7 +151,7 @@ The hosted application must have access to the trained model weights at runtime.
 
 The repository contains the Streamlit application, image-analysis utilities, educational guidance, dependency list and a YOLO-compatible training entry point.
 
-The trained acne detector and the dataset conversion process remain to be completed. Until a validated model is configured, the application uses only the clearly identified exploratory preview.
+The ACNE04 download and dataset-conversion command is implemented in `train.py`, but it has not yet been executed and validated on the training computer. The trained acne detector remains to be developed and evaluated. Until validated model weights are configured, the application uses only the clearly identified exploratory preview.
 
 ## Limitations and Responsible Use
 
