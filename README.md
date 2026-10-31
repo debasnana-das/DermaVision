@@ -1,69 +1,157 @@
 # DermaVision
 
-DermaVision is a computer vision project for image-based analysis of visible facial skin features and monitoring changes across photographs. The initial development focus is acne-feature detection, with image-quality assessment and educational skincare information as supporting components.
+DermaVision is an image-based facial skin analysis application developed using computer vision and machine learning. The initial model-development focus is the localisation of visible acne-like features. Image-quality assessment, measurement summaries and general skincare information are supporting functions.
 
-The system is intended for educational and demonstrative use. It is not a medical diagnostic tool and does not replace assessment by a qualified healthcare professional.
+DermaVision is intended for educational and demonstration purposes. It is not a medical diagnostic tool and does not replace assessment by a qualified healthcare professional.
 
-## Objectives
+## Features
 
-- Assess whether an uploaded facial photograph is suitable for analysis.
-- Detect and localise supported visible skin features using image processing and machine learning.
-- Present measured results with appropriate limitations.
-- Compare measurements from photographs captured under reasonably consistent conditions.
-- Provide general, evidence-based skincare information.
+- Upload facial photographs in JPG, JPEG, PNG or WEBP format.
+- Assess basic image sharpness and brightness.
+- Display an exploratory image-processing preview when trained model weights are unavailable.
+- Run a trained object-detection model and display annotated predictions when model weights are provided.
+- Review general skincare information and safety guidance.
+- Download an analysis summary.
 
-## Planned Components
-
-1. **Image input and quality assessment** — image upload, validation and checks for basic capture quality.
-2. **Skin-feature analysis** — an initial acne-feature detection model, followed by additional feature categories only where suitable data and validation are available.
-3. **Measurement and visualisation** — annotated images and quantitative summaries of model predictions.
-4. **Progress monitoring** — comparison of measurements across photographs while accounting for differences in capture conditions.
-5. **Educational guidance** — general information and safety guidance, without diagnosis or personalised prescriptions.
+The exploratory preview uses simple colour and contrast heuristics. It does not detect or count confirmed acne lesions. Lesion detection is available only after a suitable model has been trained and its weights have been configured.
 
 ## Technology
-
-The planned implementation uses:
 
 - Python
 - Streamlit
 - OpenCV
 - PyTorch
+- Ultralytics
+- NumPy
+- Pillow
 
-The final dependencies and versions will be recorded in `requirements.txt` as the implementation is established.
+## Repository Structure
 
-## Repository Contents
+```text
+dermavision/
+├── app.py
+├── skin_analysis.py
+├── guidance.py
+├── train.py
+├── requirements.txt
+├── README.md
+└── .gitignore
+```
 
-The repository will contain application source code, model-training and evaluation code, configuration, and project documentation.
+Training datasets, personal photographs, generated outputs and model-weight files are kept outside the source repository.
 
-Training datasets, personal photographs, generated outputs, and large model-weight files are maintained separately from the source repository. Dataset access instructions, attribution, and applicable usage conditions will be documented before each dataset is used. Model weights required by the hosted application will be provided through the deployment environment or an appropriate external storage location.
+## Installation
+
+Python 3.10 or later is recommended.
+
+Create and activate a virtual environment.
+
+**Windows PowerShell**
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+**Linux or macOS**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install the dependencies.
+
+```bash
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+## Run the Application
+
+Start the Streamlit application from the repository root.
+
+```bash
+streamlit run app.py
+```
+
+When trained model weights are not configured, the application displays a clearly labelled image-processing preview. This preview is not an acne detector.
+
+To run inference with trained weights, set the `DERMAVISION_MODEL_PATH` environment variable to the model file before starting Streamlit.
+
+**Windows PowerShell**
+
+```powershell
+$env:DERMAVISION_MODEL_PATH = "C:\path\to\best.pt"
+streamlit run app.py
+```
+
+**Linux or macOS**
+
+```bash
+export DERMAVISION_MODEL_PATH="/path/to/best.pt"
+streamlit run app.py
+```
+
+The model file must be compatible with the Ultralytics inference interface used by `skin_analysis.py`.
+
+## Model Training
+
+The training entry point accepts a dataset configuration in YOLO format. The original dataset must first be prepared and its annotations converted to the required format. The raw ACNE04 files are not consumed directly by the current training script.
+
+A YOLO-format dataset should have separate training and validation images and labels. Each label file uses the format:
+
+```text
+class_id x_center y_center width height
+```
+
+Coordinates must be normalised to the range 0–1. The dataset configuration file must specify the training path, validation path and class names.
+
+Example configuration:
+
+```yaml
+path: /absolute/path/to/prepared_dataset
+train: images/train
+val: images/val
+names:
+  0: acne_lesion
+```
+
+Run training with:
+
+```bash
+python train.py --data /path/to/data.yaml --epochs 100 --imgsz 640 --batch 8
+```
+
+The training script saves the best weights under the configured output directory, normally:
+
+```text
+outputs/acne_detection/weights/best.pt
+```
+
+Use the resulting file for local inference by setting `DERMAVISION_MODEL_PATH`. Training performance must be evaluated on held-out data before the model is used for demonstration.
+
+## Dataset and Model Use
+
+No dataset or trained model weights are included in this repository. Dataset access, attribution and licence conditions must be reviewed before use. The dataset must be prepared separately on the training computer.
+
+The hosted application must have access to the trained model weights at runtime. This can be configured through the hosting environment or an approved external model-storage service. The original training dataset is not required for inference.
 
 ## Development Status
 
-The repository has been created and the initial project documentation is in place. Application development, dataset preparation, model training, evaluation, and deployment are pending.
+The repository contains the Streamlit application, image-analysis utilities, educational guidance, dependency list and a YOLO-compatible training entry point.
 
-Features will be identified as complete only after implementation and testing.
-
-## Intended Workflow
-
-1. Prepare and validate permitted training data.
-2. Develop the image-processing and model-training pipeline.
-3. Evaluate the model on data held out from training.
-4. Integrate the validated inference pipeline into the Streamlit application.
-5. Deploy the application with its required model weights.
-6. Verify the hosted application using images not used during model training.
+The trained acne detector and the dataset conversion process remain to be completed. Until a validated model is configured, the application uses only the clearly identified exploratory preview.
 
 ## Limitations and Responsible Use
 
-- Predictions depend on image quality, dataset coverage, annotation quality, and model performance.
-- Differences in lighting, camera characteristics, skin tone, image angle, makeup, and facial hair may affect results.
-- A photograph cannot establish vitamin or mineral deficiencies.
-- The application must not be used to diagnose a condition, prescribe treatment, or make clinical decisions.
-- Users should consult a qualified healthcare professional for persistent, painful, worsening, or otherwise concerning skin changes.
+- Model predictions depend on image quality, dataset coverage, annotation quality and model performance.
+- Lighting, camera characteristics, skin tone, image angle, makeup and facial hair may affect image analysis.
+- A facial photograph cannot establish vitamin or mineral deficiencies.
+- The application must not be used to diagnose a medical condition, prescribe treatment or make clinical decisions.
+- Users should consult a qualified healthcare professional for persistent, painful, worsening or otherwise concerning skin changes.
+- Uploaded photographs should be handled with appropriate consent and privacy safeguards.
 
-## Running the Application
+## Licence
 
-Local installation and execution instructions will be added after the application entry point and dependency list are finalised.
-
-## Licence and Data Use
-
-No software licence has been assigned to this repository at this stage. Dataset and model licences are separate from the repository licence and must be checked before redistribution or deployment.
+No software licence has been assigned to this repository. Dataset and model licences are separate from the repository licence and must be checked before redistribution or deployment.
