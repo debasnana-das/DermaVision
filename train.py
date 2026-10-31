@@ -203,7 +203,8 @@ def prepare_acne04(dataset_id: str, output_dir: Path, overwrite: bool = False) -
             image_path = image_dir / record["image_name"]
             label_path = label_dir / f"{Path(record['image_name']).stem}.txt"
 
-            record["image"].save(image_path, format="JPEG", quality=95)
+            source_image = _open_dataset_image(dataset[record["row_index"]]["image"])
+            source_image.save(image_path, format="JPEG", quality=95)
             label_path.write_text(
                 "\n".join(record["yolo_boxes"]),
                 encoding="utf-8",
