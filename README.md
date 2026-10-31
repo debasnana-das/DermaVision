@@ -11,7 +11,7 @@ DermaVision is intended for educational and demonstration purposes. It is not a 
 - Display an exploratory image-processing preview when trained model weights are unavailable.
 - Run a trained object-detection model and display annotated predictions when model weights are provided.
 - Review general skincare information and safety guidance.
-- Download an analysis summary.
+- Download an analysis summary as a plain-text file or a formatted PDF.
 
 The exploratory preview uses simple colour and contrast heuristics. It does not detect or count confirmed acne lesions. Lesion detection is available only after a suitable model has been trained and its weights have been configured.
 
@@ -24,6 +24,7 @@ The exploratory preview uses simple colour and contrast heuristics. It does not 
 - Ultralytics
 - NumPy
 - Pillow
+- ReportLab (PDF report generation)
 
 ## Repository Structure
 
@@ -151,7 +152,7 @@ Use the resulting file for local inference by setting `DERMAVISION_MODEL_PATH`. 
 
 No dataset or trained model weights are included in this repository. The current preparation script uses the `Layered-Labs/ACNE04` Hugging Face dataset release and expects the `image`, `file_name`, `lesion_boxes` and `split` fields. ACNE04 is intended for academic and research use only. Its original licensing conditions prohibit commercial use without permission from the original authors. Review the dataset card and original source terms before downloading or using it. Cite both the dataset release and the original ACNE04 paper in academic reports. The dataset must be prepared separately on the training computer.
 
-The application looks for `acne_detector.pt` in the repository root by default. Alternatively, set `DERMAVISION_MODEL_PATH` to the model file path through the hosting environment. The original training dataset is not required for inference.
+The application looks for `acne_detector.pt` in the repository root by default. Alternatively, set `DERMAVISION_MODEL_PATH` to the model file path through the hosting environment. The original training dataset is not required for inference. After an image is analysed, the user can download the same analysis summary as either a TXT file or a formatted PDF.
 
 ## Deployment
 
