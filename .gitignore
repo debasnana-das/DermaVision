@@ -23,6 +23,7 @@ checkpoints/
 
 # Model weights and exported models
 *.pt
+!acne_detector.pt
 *.pth
 *.onnx
 *.safetensors
