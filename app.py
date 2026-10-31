@@ -22,8 +22,12 @@ DEFAULT_MODEL_PATH = Path(__file__).with_name("acne_detector.pt")
 def get_model(model_path: str):
     path = Path(model_path)
     if not path.is_file():
-        return None
-    return load_detector(path)
+        return None, None
+
+    try:
+        return load_detector(path), None
+    except Exception as exc:
+        return None, str(exc)
 
 
 def create_report(quality: dict, detections: list[dict] | None, mode: str) -> str:
@@ -93,7 +97,7 @@ uploaded_file = st.file_uploader(
 )
 
 model_path = os.environ.get("DERMAVISION_MODEL_PATH", str(DEFAULT_MODEL_PATH))
-model = get_model(model_path)
+model, model_error = get_model(model_path)
 
 if uploaded_file is None:
     st.info("Upload a photograph to begin.")
@@ -132,6 +136,12 @@ else:
         analysis_mode = "Trained object-detection model"
     else:
         result_image, preview_stats = make_preview_overlay(image_array)
+        if model_error:
+            st.warning(
+                "The configured model weights could not be loaded. "
+                "The application is showing the non-diagnostic image-processing preview instead."
+            )
+            st.caption(f"Model loading detail: {model_error}")
 
     with result_col:
         st.subheader("Analysis result")
