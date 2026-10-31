@@ -97,7 +97,7 @@ The model file must be compatible with the Ultralytics inference interface used 
 
 ## Model Training
 
-The training entry point accepts a dataset configuration in YOLO format. The original dataset must first be prepared and its annotations converted to the required format. The raw ACNE04 files are not consumed directly by the current training script.
+The training entry point can prepare ACNE04 from its Hugging Face dataset repository and convert its lesion bounding boxes to YOLO format. The canonical fold-0 test partition is preserved as a held-out test set; ten percent of the official training partition is reserved for validation using a fixed random seed.
 
 A YOLO-format dataset should have separate training and validation images and labels. Each label file uses the format:
 
@@ -117,11 +117,21 @@ names:
   0: acne_lesion
 ```
 
-Run training with:
+First, prepare the dataset locally:
 
 ```bash
-python train.py --data /path/to/data.yaml --epochs 100 --imgsz 640 --batch 8
+python train.py --prepare-acne04
 ```
+
+This downloads the dataset and writes the prepared images, labels and configuration under `data/acne04_yolo/`. The original dataset is approximately 1.13 GB; additional disk space is required for extracted images and training outputs. The output directory is excluded from Git.
+
+Then train the initial detector:
+
+```bash
+python train.py --data data/acne04_yolo/data.yaml --epochs 100 --imgsz 640 --batch 8
+```
+
+To use a GPU, install a PyTorch build compatible with the CUDA version and hardware available on the training computer. For a CPU-only run, specify `--device cpu`; training may be considerably slower.
 
 The training script saves the best weights under the configured output directory, normally:
 
@@ -133,7 +143,7 @@ Use the resulting file for local inference by setting `DERMAVISION_MODEL_PATH`. 
 
 ## Dataset and Model Use
 
-No dataset or trained model weights are included in this repository. Dataset access, attribution and licence conditions must be reviewed before use. The dataset must be prepared separately on the training computer.
+No dataset or trained model weights are included in this repository. The current preparation script uses the `Layered-Labs/ACNE04` Hugging Face dataset release and expects the `image`, `file_name`, `lesion_boxes` and `split` fields. ACNE04 is intended for academic and research use only. Its original licensing conditions prohibit commercial use without permission from the original authors. Review the dataset card and original source terms before downloading or using it. Cite both the dataset release and the original ACNE04 paper in academic reports. The dataset must be prepared separately on the training computer.
 
 The hosted application must have access to the trained model weights at runtime. This can be configured through the hosting environment or an approved external model-storage service. The original training dataset is not required for inference.
 
@@ -155,3 +165,10 @@ The trained acne detector and the dataset conversion process remain to be comple
 ## Licence
 
 No software licence has been assigned to this repository. Dataset and model licences are separate from the repository licence and must be checked before redistribution or deployment.
+
+
+## Dataset References
+
+- ACNE04 dataset release: https://huggingface.co/datasets/Layered-Labs/ACNE04
+- Original ACNE04 source repository: https://github.com/xpwu95/LDL
+- Wu et al., "Joint Acne Image Grading and Counting via Label Distribution Learning", ICCV 2019.
