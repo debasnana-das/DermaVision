@@ -4,12 +4,30 @@ DermaVision is an image-based facial skin analysis application developed using c
 
 DermaVision is intended for educational and demonstration purposes. It is not a medical diagnostic tool and does not replace assessment by a qualified healthcare professional.
 
+## Live Application
+
+The deployed DermaVision application is available here:
+
+**Live demo:** https://dermavision-55.streamlit.app/
+
+The application is hosted using **Streamlit Community Cloud**. It is connected to this GitHub repository and currently deploys from:
+
+| Deployment setting | Value |
+|---|---|
+| Hosting platform | Streamlit Community Cloud |
+| GitHub repository | `debasnana-das/DermaVision` |
+| Branch | `main` |
+| Application entry point | `app.py` |
+| Model checkpoint | `acne_detector.pt` |
+
+The deployed application loads the committed model checkpoint for inference. The original ACNE04 training dataset is not downloaded during normal application use.
+
 ## Features
 
 - Upload facial photographs in JPG, JPEG, PNG or WEBP format.
 - Assess basic image sharpness and brightness.
 - Display an exploratory image-processing preview when trained model weights are unavailable.
-- Run a trained object-detection model and display annotated predictions when model weights are provided.
+- Run the included YOLOv8n object-detection checkpoint and display annotated candidate predictions.
 - Review general skincare information and safety guidance.
 - Download an analysis summary as a plain-text file or a formatted PDF.
 
@@ -29,17 +47,20 @@ The exploratory preview uses simple colour and contrast heuristics. It does not 
 ## Repository Structure
 
 ```text
-dermavision/
-├── app.py
-├── skin_analysis.py
-├── guidance.py
-├── train.py
-├── requirements.txt
+DermaVision/
+├── .gitignore
+├── LICENSE
 ├── README.md
-└── .gitignore
+├── acne_detector.pt
+├── app.py
+├── guidance.py
+├── packages.txt
+├── requirements.txt
+├── skin_analysis.py
+└── train.py
 ```
 
-Training datasets, personal photographs, generated outputs and model-weight files are kept outside the source repository.
+The original training dataset, uploaded personal photographs, generated training outputs and intermediate checkpoints are not stored in this repository. The selected inference checkpoint, `acne_detector.pt`, is included in the repository root.
 
 ## Installation
 
@@ -150,24 +171,23 @@ Use the resulting file for local inference by setting `DERMAVISION_MODEL_PATH`. 
 
 ## Dataset and Model Use
 
-No dataset or trained model weights are included in this repository. The current preparation script uses the `Layered-Labs/ACNE04` Hugging Face dataset release and expects the `image`, `file_name`, `lesion_boxes` and `split` fields. ACNE04 is intended for academic and research use only. Its original licensing conditions prohibit commercial use without permission from the original authors. Review the dataset card and original source terms before downloading or using it. Cite both the dataset release and the original ACNE04 paper in academic reports. The dataset must be prepared separately on the training computer.
+The original ACNE04 dataset is not included in this repository. The current preparation script uses the `Layered-Labs/ACNE04` Hugging Face dataset release and expects the `image`, `file_name`, `lesion_boxes` and `split` fields. ACNE04 is intended for academic and research use; review the dataset card and original source terms before downloading, using or redistributing it. Cite both the dataset release and the original ACNE04 paper in academic reports. The dataset must be obtained and prepared separately in the training environment.
 
-The application looks for `acne_detector.pt` in the repository root by default. Alternatively, set `DERMAVISION_MODEL_PATH` to the model file path through the hosting environment. The original training dataset is not required for inference. After an image is analysed, the user can download the same analysis summary as either a TXT file or a formatted PDF.
+The selected trained YOLOv8n inference checkpoint is included at the repository root as `acne_detector.pt`. This file is loaded by the application for inference.
+
+The application looks for `acne_detector.pt` in the repository root by default. Alternatively, set `DERMAVISION_MODEL_PATH` to another compatible model file through the hosting environment. The original training dataset is not required for inference. After an image is analysed, the user can download the same analysis summary as either a TXT file or a formatted PDF.
 
 ## Deployment
 
-For Streamlit Community Cloud:
+The current application is deployed on Streamlit Community Cloud:
 
-1. Place the selected trained checkpoint in the repository root and name it `acne_detector.pt`.
-2. Confirm that `app.py`, `requirements.txt`, and `acne_detector.pt` are committed to the `main` branch.
-3. Sign in at https://share.streamlit.io and connect the GitHub account that owns this repository.
-4. Select **Create app**, then choose `debasnana-das/DermaVision`, branch `main`, and entry point `app.py`.
-5. Deploy the application and wait for the dependency installation and startup checks to finish.
-6. Open the assigned `streamlit.app` URL and test it with a suitable photograph.
+**Live URL:** https://dermavision-55.streamlit.app/
 
-Streamlit Community Cloud must be authorised to access the private GitHub repository before deployment. A private application can be restricted to named viewers; invited viewers must authenticate. If the application is configured as public, anyone with its URL may access it. Review the sharing setting before distributing the link.
+The deployed app is connected to this public GitHub repository and uses the `main` branch with `app.py` as its entry point. Streamlit Community Cloud installs the Python dependencies listed in `requirements.txt` and the operating-system packages listed in `packages.txt`, then starts the Streamlit application.
 
-The hosted application performs inference using the trained model weights. It does not download or require the original training dataset.
+The application loads the included `acne_detector.pt` checkpoint from the repository root for inference. It does not download or require the original ACNE04 training dataset when a user uploads a photograph.
+
+To reproduce the deployment, connect the GitHub repository at https://share.streamlit.io, select branch `main`, and set the main file to `app.py`. The application URL and its access settings can be managed through the Streamlit Community Cloud dashboard.
 
 ## Development Status
 
