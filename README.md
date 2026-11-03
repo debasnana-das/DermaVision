@@ -24,7 +24,7 @@ The deployed application loads the committed model checkpoint for inference. The
 
 ## Features
 
-- Upload facial photographs in JPG, JPEG, PNG or WEBP format.
+- Select one of four locally stored ACNE04 academic demonstration photographs or upload a facial photograph in JPG, JPEG, PNG or WEBP format.
 - Assess basic image sharpness and brightness.
 - Display an exploratory image-processing preview when trained model weights are unavailable.
 - Run the included YOLOv8n object-detection checkpoint and display annotated candidate predictions.
@@ -56,11 +56,17 @@ DermaVision/
 ├── guidance.py
 ├── packages.txt
 ├── requirements.txt
+├── sample_images/
+│   ├── README.md
+│   ├── acne04_mild_levle0_103.jpg
+│   ├── acne04_moderate_levle1_503.jpg
+│   ├── acne04_severe_levle2_19.jpg
+│   └── acne04_very_severe_levle3_33.jpg
 ├── skin_analysis.py
 └── train.py
 ```
 
-The original training dataset, uploaded personal photographs, generated training outputs and intermediate checkpoints are not stored in this repository. The selected inference checkpoint, `acne_detector.pt`, is included in the repository root.
+The full original training dataset, uploaded personal photographs, generated training outputs and intermediate checkpoints are not stored in this repository. Four selected ACNE04 demonstration photographs are included under `sample_images/` with a separate academic-use attribution notice. The selected inference checkpoint, `acne_detector.pt`, is included in the repository root.
 
 ## Installation
 
@@ -169,9 +175,26 @@ outputs/acne_detection/weights/best.pt
 
 Use the resulting file for local inference by setting `DERMAVISION_MODEL_PATH`. Training performance must be evaluated on held-out data before the model is used for demonstration.
 
+## Sample Image Gallery
+
+The Streamlit application includes a **Try an ACNE04 sample** option. It loads four sample photographs directly from the repository's `sample_images/` folder, so the gallery does not depend on a live dataset download at runtime.
+
+The four photographs represent the original ACNE04 severity grades and were selected from the canonical fold-0 held-out test partition:
+
+| Sample | Dataset grade | Original filename |
+|---|---|---|
+| Mild | Level 0 | `levle0_103.jpg` |
+| Moderate | Level 1 | `levle1_503.jpg` |
+| Severe | Level 2 | `levle2_19.jpg` |
+| Very severe | Level 3 | `levle3_33.jpg` |
+
+The displayed severity is the original dataset annotation. It is not a prediction made by DermaVision and is not a medical diagnosis. The selected image is passed through the same image-quality and YOLO inference workflow used for uploaded photographs.
+
+See [sample_images/README.md](sample_images/README.md) for image-level provenance, citation and usage restrictions. The sample photographs remain third-party dataset material and are not covered by this repository's AGPL-3.0 software licence.
+
 ## Dataset and Training Notebook
 
-DermaVision uses the ACNE04 dataset for acne-lesion detection model development. The original dataset is hosted separately on Hugging Face and is not copied into this GitHub repository.
+DermaVision uses the ACNE04 dataset for acne-lesion detection model development. The complete original dataset is hosted separately on Hugging Face and is not copied into this GitHub repository. Four selected academic demonstration photographs are stored locally in `sample_images/`; their provenance and usage notice are documented in that folder.
 
 - **Dataset:** [ACNE04 on Hugging Face](https://huggingface.co/datasets/Layered-Labs/ACNE04) — source images, annotations, labels and dataset information.
 - **Kaggle notebook:** [DermaVision image-processing and model-training notebook](https://www.kaggle.com/code/debasnana/image-processing) — notebook code, dataset exploration and the model-development workflow.
