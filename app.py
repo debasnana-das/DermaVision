@@ -7,7 +7,6 @@ from xml.sax.saxutils import escape
 import numpy as np
 import streamlit as st
 from PIL import Image
-import requests
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
@@ -25,65 +24,13 @@ from skin_analysis import (
 APP_TITLE = "DermaVision"
 DEFAULT_MODEL_PATH = Path(__file__).with_name("acne_detector.pt")
 ACNE04_DATASET_URL = "https://huggingface.co/datasets/Layered-Labs/ACNE04"
-
-
-@st.cache_data(ttl=3600, show_spinner=False)
-def get_acne04_samples() -> list[dict]:
-    """Fetch one real sample per severity from ACNE04's held-out test partition."""
-    samples = []
-    for severity in ("mild", "moderate", "severe", "very_severe"):
-        response = requests.get(
-            "https://datasets-server.huggingface.co/filter",
-            params={
-                "dataset": "Layered-Labs/ACNE04",
-                "config": "default",
-                "split": "train",
-                "where": f'"split"=\'test\' AND "severity"=\'{severity}\'',
-                "offset": 0,
-                "length": 1,
-            },
-            timeout=(5, 30),
-        )
-        response.raise_for_status()
-        rows = response.json().get("rows", [])
-        if not rows:
-            continue
-        row = rows[0].get("row", {})
-        image_info = row.get("image", {})
-        image_url = image_info.get("src") if isinstance(image_info, dict) else None
-        if not image_url:
-            continue
-        samples.append({
-            "label": f"{severity.replace('_', ' ').title()} — {row.get('file_name', 'ACNE04 sample')}",
-            "severity": severity.replace("_", " "),
-            "file_name": str(row.get("file_name", "ACNE04 sample")),
-            "image_url": image_url,
-            "lesion_count": row.get("num_lesions_annotated"),
-            "split": row.get("split", "test"),
-        })
-    if not samples:
-        raise RuntimeError("No ACNE04 test samples were returned by the dataset viewer.")
-    return samples
-
-
-@st.cache_data(ttl=3600, show_spinner=False)
-def get_acne04_image(image_url: str) -> bytes:
-    """Fetch a single image from a Hugging Face dataset-viewer URL."""
-    from urllib.parse import urlparse
-
-    parsed = urlparse(image_url)
-    host = parsed.hostname or ""
-    if parsed.scheme != "https" or not (
-        host == "huggingface.co" or host.endswith(".huggingface.co")
-    ):
-        raise ValueError("Unexpected image host returned by the ACNE04 dataset viewer.")
-    response = requests.get(image_url, timeout=(5, 30))
-    response.raise_for_status()
-    if not response.headers.get("Content-Type", "").startswith("image/"):
-        raise ValueError("The ACNE04 sample URL did not return an image.")
-    if len(response.content) > 15 * 1024 * 1024:
-        raise ValueError("The ACNE04 sample exceeds the 15 MB demo limit.")
-    return response.content
+SAMPLE_IMAGE_DIR = Path(__file__).with_name("sample_images")
+ACNE04_SAMPLES = [
+    {"label": "Mild (Level 0) — levle0_103.jpg", "severity": "Mild", "level": 0, "file_name": "levle0_103.jpg", "path": "acne04_mild_levle0_103.jpg"},
+    {"label": "Moderate (Level 1) — levle1_503.jpg", "severity": "Moderate", "level": 1, "file_name": "levle1_503.jpg", "path": "acne04_moderate_levle1_503.jpg"},
+    {"label": "Severe (Level 2) — levle2_19.jpg", "severity": "Severe", "level": 2, "file_name": "levle2_19.jpg", "path": "acne04_severe_levle2_19.jpg"},
+    {"label": "Very severe (Level 3) — levle3_33.jpg", "severity": "Very severe", "level": 3, "file_name": "levle3_33.jpg", "path": "acne04_very_severe_levle3_33.jpg"},
+]
 
 
 @st.cache_resource(show_spinner="Loading the detection model...")
@@ -103,6 +50,7 @@ def create_report(
     detections: list[dict] | None,
     mode: str,
     educational_guidance: list[str],
+    image_source_details: str,
 ) -> str:
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     lines = [
@@ -110,6 +58,7 @@ def create_report(
         f"Generated: {generated_at}",
         "",
         f"Analysis mode: {mode}",
+        f"Image source: {image_source_details}",
         f"Image quality indicator: {quality['score']}/100",
         f"Sharpness: {quality['sharpness_label']}",
         f"Brightness: {quality['brightness_label']}",
@@ -289,68 +238,70 @@ image_source_mode = st.radio(
     ["Try an ACNE04 sample", "Upload your own photograph"],
     horizontal=True,
 )
-uploaded_file = None
+
+image_array = None
 image_caption = "Uploaded photograph"
 image_source_details = "User-provided photograph"
 selected_sample = None
 
 if image_source_mode == "Try an ACNE04 sample":
     st.caption(
-        "Samples are retrieved from the ACNE04 held-out test split when selected. "
-        "They are not stored in this GitHub repository."
+        "Choose one of four ACNE04 academic demonstration photographs stored in this GitHub repository."
     )
     st.markdown(f"Dataset source: [ACNE04 on Hugging Face]({ACNE04_DATASET_URL})")
-    try:
-        sample_catalog = get_acne04_samples()
-        selected_label = st.selectbox(
-            "Select a sample photograph",
-            [sample["label"] for sample in sample_catalog],
+    selected_label = st.selectbox(
+        "Select a sample photograph",
+        [sample["label"] for sample in ACNE04_SAMPLES],
+    )
+    selected_sample = next(
+        sample for sample in ACNE04_SAMPLES if sample["label"] == selected_label
+    )
+    sample_path = SAMPLE_IMAGE_DIR / selected_sample["path"]
+    if sample_path.is_file():
+        try:
+            image = Image.open(sample_path).convert("RGB")
+            image_array = np.asarray(image, dtype=np.uint8)
+            image_caption = "Selected ACNE04 sample"
+            image_source_details = (
+                f"ACNE04 held-out test sample; dataset severity label: "
+                f"{selected_sample['severity']}; original filename: {selected_sample['file_name']}"
+            )
+        except Exception:
+            st.error("The selected sample file could not be opened.")
+    else:
+        st.error(
+            f"Sample file not found: {sample_path.name}. "
+            "Check that the sample_images folder is present in the repository."
         )
-        selected_sample = next(
-            sample for sample in sample_catalog if sample["label"] == selected_label
-        )
-        sample_bytes = get_acne04_image(selected_sample["image_url"])
-        uploaded_file = BytesIO(sample_bytes)
-        image_caption = "Selected ACNE04 sample"
-        image_source_details = (
-            f"ACNE04 held-out test sample; severity label: {selected_sample['severity']}; "
-            f"filename: {selected_sample['file_name']}"
-        )
-    except Exception as exc:
-        st.warning(
-            "The ACNE04 sample gallery is temporarily unavailable. "
-            "You can still switch to upload mode or open the dataset directly."
-        )
-        st.caption(f"Gallery error: {exc}")
 else:
     uploaded_file = st.file_uploader(
         "Upload a front-facing facial photograph",
         type=["jpg", "jpeg", "png", "webp"],
     )
+    if uploaded_file is not None:
+        try:
+            image = Image.open(uploaded_file).convert("RGB")
+            image_array = np.asarray(image, dtype=np.uint8)
+        except Exception:
+            st.error("The selected file could not be opened as an image. Please upload a valid image.")
+            st.stop()
 
 model_path = os.environ.get("DERMAVISION_MODEL_PATH", str(DEFAULT_MODEL_PATH))
 model, model_error = get_model(model_path)
 
-if uploaded_file is None:
-    st.info("Upload a photograph to begin.")
+if image_array is None:
+    st.info("Select an ACNE04 sample or upload a photograph to begin.")
     st.markdown(
         """
         **Application workflow**
 
-        1. Validate the uploaded image.
+        1. Choose a sample image or upload a photograph.
         2. Assess basic image quality.
         3. Analyse visible features using the available model.
         4. Display annotated results and general educational information.
         """
     )
 else:
-    try:
-        image = Image.open(uploaded_file).convert("RGB")
-        image_array = np.asarray(image, dtype=np.uint8)
-    except Exception:
-        st.error("The selected file could not be opened as an image. Please upload a valid image.")
-        st.stop()
-
     quality = assess_image_quality(image_array)
 
     image_col, result_col = st.columns(2)
@@ -359,9 +310,8 @@ else:
         st.image(image_array, use_container_width=True)
         if selected_sample is not None:
             st.caption(
-                f"Dataset severity label: {selected_sample['severity']} | "
-                f"Annotated boxes: {selected_sample['lesion_count']} | "
-                f"Split: {selected_sample['split']}"
+                f"Original ACNE04 severity annotation: {selected_sample['severity']} "
+                f"(level {selected_sample['level']}). This is a dataset label, not a model prediction."
             )
 
     detections = None
@@ -446,7 +396,13 @@ else:
         if st.session_state.history:
             st.dataframe(st.session_state.history, use_container_width=True, hide_index=True)
 
-    report_text = create_report(quality, detections, analysis_mode, educational_guidance)
+    report_text = create_report(
+        quality,
+        detections,
+        analysis_mode,
+        educational_guidance,
+        image_source_details,
+    )
     report_pdf = create_pdf_report(report_text)
 
     text_download_col, pdf_download_col = st.columns(2)
