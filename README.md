@@ -169,6 +169,15 @@ outputs/acne_detection/weights/best.pt
 
 Use the resulting file for local inference by setting `DERMAVISION_MODEL_PATH`. Training performance must be evaluated on held-out data before the model is used for demonstration.
 
+## Dataset and Training Notebook
+
+DermaVision uses the ACNE04 dataset for acne-lesion detection model development. The original dataset is hosted separately on Hugging Face and is not copied into this GitHub repository.
+
+- **Dataset:** [ACNE04 on Hugging Face](https://huggingface.co/datasets/Layered-Labs/ACNE04) — source images, annotations, labels and dataset information.
+- **Kaggle notebook:** [DermaVision image-processing and model-training notebook](https://www.kaggle.com/code/debasnana/image-processing) — notebook code, dataset exploration and the model-development workflow.
+
+The Kaggle notebook and dataset have their own access and usage conditions. Refer to the dataset card and original dataset terms before downloading, using or redistributing the data.
+
 ## Dataset and Model Use
 
 The original ACNE04 dataset is not included in this repository. The current preparation script uses the `Layered-Labs/ACNE04` Hugging Face dataset release and expects the `image`, `file_name`, `lesion_boxes` and `split` fields. ACNE04 is intended for academic and research use; review the dataset card and original source terms before downloading, using or redistributing it. Cite both the dataset release and the original ACNE04 paper in academic reports. The dataset must be obtained and prepared separately in the training environment.
